@@ -1,0 +1,30 @@
+LANGUAGE 0, 0
+
+1 24 "rename.manifest"
+
+1 VERSIONINFO
+FILEVERSION {{version .Info.ProductVersion}}
+PRODUCTVERSION {{version .Info.ProductVersion}}
+FILEFLAGSMASK 0x3fL
+FILEFLAGS 0
+FILEOS 0x40004L
+FILETYPE 1
+FILESUBTYPE 0
+BEGIN
+  BLOCK "StringFileInfo"
+  BEGIN
+    BLOCK "000004b0"
+    BEGIN
+      VALUE "CompanyName", {{quote .Info.CompanyName}}
+      VALUE "ProductName", {{quote .Info.ProductName}}
+      VALUE "FileDescription", {{quote .Info.ProductName}}
+      VALUE "FileVersion", {{quote .Info.ProductVersion}}
+      VALUE "ProductVersion", {{quote .Info.ProductVersion}}
+      VALUE "Comments", {{quote .Info.Comments}}
+    END
+  END
+  BLOCK "VarFileInfo"
+  BEGIN
+    VALUE "Translation", 0, 1200
+  END
+END
