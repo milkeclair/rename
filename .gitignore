@@ -1,0 +1,11 @@
+/build/bin/
+/build/generated/
+/frontend/node_modules/
+/frontend/dist/
+/frontend/wailsjs/
+/frontend/coverage/
+*.syso
+*.tsbuildinfo
+*.log
+.DS_Store
+Thumbs.db
