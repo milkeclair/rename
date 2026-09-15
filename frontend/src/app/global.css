@@ -1,0 +1,41 @@
+* {
+  box-sizing: border-box;
+}
+
+:root {
+  font-family: 'Segoe UI', 'Yu Gothic UI', Meiryo, sans-serif;
+  color: #273449;
+  background: #f6f8fb;
+  font-synthesis: none;
+  font-weight: 400;
+}
+
+body {
+  margin: 0;
+  min-width: 760px;
+}
+
+button,
+input,
+select {
+  font: inherit;
+}
+
+button {
+  cursor: pointer;
+  transition:
+    background 0.15s,
+    border-color 0.15s;
+}
+
+button:disabled {
+  cursor: default;
+  opacity: 0.42;
+}
+
+button:focus-visible,
+input:focus-visible,
+select:focus-visible {
+  outline: 3px solid #acc6ff;
+  outline-offset: 2px;
+}

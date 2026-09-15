@@ -1,0 +1,13 @@
+.secondary {
+  border: 1px solid #d8e0eb;
+  background: white;
+  border-radius: 7px;
+  padding: 9px 17px;
+  color: #475975;
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.secondary:hover:not(:disabled) {
+  background: #eff4fc;
+}
