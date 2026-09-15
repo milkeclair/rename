@@ -1,0 +1,46 @@
+.footer {
+  display: flex;
+  gap: 18px;
+  align-items: center;
+  justify-content: space-between;
+  flex: none;
+  min-height: 44px;
+}
+
+.execute {
+  border: none;
+  border-radius: 9px;
+  color: white;
+  background: #456ccd;
+  padding: 13px 22px;
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.execute:hover:not(:disabled) {
+  background: #355bb8;
+}
+
+.feedback {
+  font-size: 12px;
+  color: #8794a6;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  overflow-wrap: anywhere;
+}
+
+.feedback progress {
+  width: 150px;
+  height: 5px;
+  accent-color: #456ccd;
+}
+
+.error {
+  color: #b34553;
+}
+
+.success {
+  color: #31806a;
+}
