@@ -1,0 +1,49 @@
+.settings {
+  display: grid;
+  grid-template-columns: minmax(180px, 1fr) 100px minmax(230px, 1.25fr);
+  gap: 18px;
+  flex: none;
+}
+
+.settings label {
+  display: block;
+  font-size: 11px;
+  color: #7a879a;
+  margin-bottom: 7px;
+}
+
+.settings input {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid #dce3ed;
+  border-radius: 7px;
+  background: white;
+  color: #34455f;
+  font-size: 13px;
+  min-width: 0;
+}
+
+.settings input:disabled {
+  background: #f0f3f8;
+  color: #8a97a8;
+}
+
+.settings input::placeholder {
+  color: #a4afbf;
+  font-size: 12px;
+}
+
+.destination {
+  display: flex;
+  gap: 8px;
+}
+
+.destination input {
+  text-overflow: ellipsis;
+}
+
+@media (max-width: 880px) {
+  .settings {
+    gap: 12px;
+  }
+}
