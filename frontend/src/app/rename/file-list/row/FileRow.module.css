@@ -1,0 +1,114 @@
+.row td {
+  padding: 12px;
+  border-bottom: 1px solid #eff2f6;
+  vertical-align: top;
+}
+
+.row[data-dragging='true'] {
+  position: relative;
+  z-index: 3;
+  background: #edf3ff;
+  box-shadow: 0 3px 12px #38598c30;
+}
+
+.row:hover {
+  background: #fafbfe;
+}
+
+.row .handleCell {
+  width: 36px;
+  padding: 10px 0 10px 12px;
+}
+
+.handle {
+  border: 0;
+  background: transparent;
+  color: #9ca9bb;
+  font-size: 22px;
+  cursor: grab;
+  padding: 0 3px;
+  touch-action: none;
+}
+
+.handle:active {
+  cursor: grabbing;
+}
+
+.row .number {
+  width: 36px;
+  padding: 14px 4px 12px;
+  color: #a4aebc;
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+}
+
+.filename {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-weight: 550;
+}
+
+.directory {
+  font-size: 10px;
+  color: #98a3b3;
+  margin-top: 5px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.created {
+  width: 155px;
+  color: #8b96a6;
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+}
+
+.outputName {
+  color: #416ac3;
+}
+
+.remove {
+  border: 0;
+  background: transparent;
+  color: #9aa6b8;
+  font-size: 19px;
+  padding: 0;
+}
+
+.remove:hover:not(:disabled) {
+  color: #bf5360;
+}
+
+.invalid,
+.issue {
+  color: #b34553;
+}
+
+.issue,
+.resultStatus,
+.resultPath {
+  font-size: 10px;
+  margin-top: 5px;
+  overflow-wrap: anywhere;
+}
+
+.resultPath {
+  color: #758297;
+}
+
+.resultStatus[data-status='done'] {
+  color: #31806a;
+}
+
+.resultStatus[data-status='failed'],
+.resultStatus[data-status='partial'] {
+  color: #b34553;
+}
+
+@media (max-width: 880px) {
+  .created {
+    width: 125px;
+  }
+}
