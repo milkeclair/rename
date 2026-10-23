@@ -1,0 +1,73 @@
+.workspace {
+  --wails-drop-target: drop;
+  background: white;
+  border: 1px solid #e2e7ee;
+  border-radius: 14px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 255px;
+  box-shadow: 0 3px 12px #253b5810;
+}
+
+.workspace[data-locked='true'] {
+  --wails-drop-target: none;
+}
+
+.workspace:global(.wails-drop-target-active) {
+  border-color: #426dde;
+  background: #eaf1ff;
+}
+
+.scroll {
+  position: relative;
+  overflow: auto;
+  flex: 1;
+  min-height: 100px;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+  font-size: 12px;
+}
+
+.table thead {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  background: #f8f9fc;
+}
+
+.table th {
+  text-align: left;
+  padding: 11px 12px;
+  font-size: 11px;
+  font-weight: 500;
+  color: #7a879b;
+  border-top: 1px solid #edf0f5;
+  border-bottom: 1px solid #edf0f5;
+}
+
+.table .orderHeading {
+  width: 72px;
+  padding-left: 18px;
+}
+
+.table th:last-child {
+  width: 40px;
+}
+
+.table .createdHeading {
+  width: 155px;
+  color: #8b96a6;
+  font-variant-numeric: tabular-nums;
+}
+
+@media (max-width: 880px) {
+  .table .createdHeading {
+    width: 125px;
+  }
+}
