@@ -1,6 +1,6 @@
 # Windowsビルド
 
-配布対象はWindows x64（Intel・AMDの64ビット）。Windows上でGo 1.27.1以降、Node.js 26.8.2以降、Wails CLI v2.16.0を使用する。
+配布対象はWindows x64（Intel・AMDの64ビット）。Windows上でGo 1.27.1以降、Node.js 26.8.2以降、go.modと同じバージョンのWails CLIを使用する。
 LLVMのリソースツールを含むbinディレクトリもPATHに追加する。
 
 - `llvm-rc.exe`: リソーススクリプトをRES形式にコンパイルする。
@@ -12,7 +12,8 @@ LLVM公式配布または [LLVM-MinGW](https://github.com/mstorsjo/llvm-mingw/re
 リポジトリルートで実行する。
 
 ```powershell
-go install github.com/wailsapp/wails/v2/cmd/wails@v2.16.0
+$wailsVersion = go list -m -f '{{.Version}}' github.com/wailsapp/wails/v2
+go install "github.com/wailsapp/wails/v2/cmd/wails@$wailsVersion"
 cd frontend
 npm ci
 cd ..
@@ -20,6 +21,7 @@ powershell -ExecutionPolicy Bypass -File build/windows/build.ps1
 ```
 
 配布物は `build/bin/rename.exe`。実行先にはWebView2ランタイムが必要。
+通常のローカルビルドはwails.jsonの値を使い、指定する場合は `build/windows/build.ps1 -Version 1.2.3` を実行する。
 
 1. `resources/product` がwails.jsonの製品情報を読み込む。
 2. `resources/manifest` と `resources/script` がWindowsマニフェストとリソーススクリプトを展開する。

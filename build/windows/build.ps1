@@ -1,10 +1,12 @@
-﻿$ErrorActionPreference = 'Stop'
+﻿param([string]$Version = '')
+
+$ErrorActionPreference = 'Stop'
 $resourceCompiler = (Get-Command llvm-rc.exe -ErrorAction Stop).Source
 $resourceConverter = (Get-Command llvm-cvtres.exe -ErrorAction Stop).Source
 
 Push-Location (Join-Path $PSScriptRoot '../..')
 try {
-  go run ./build/resources
+  go run ./build/resources "-version=$Version"
   if ($LASTEXITCODE -ne 0) { throw 'Windowsリソースの生成に失敗しました。' }
 
   Push-Location build/generated
