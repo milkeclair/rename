@@ -46,3 +46,7 @@ go test ./build/tests/...
 
 PRとmainへのpushでWindows CIがテスト・型・書式検査とビルドを実行する。
 別ドライブ間の移動テストには、ランナーのCドライブとDドライブを使用する。
+
+Actionの実行コミットは `.github/workflows/actions.lock` で固定する。
+Actionやワークフローを追加・変更したら、リポジトリルートで `gh actions-lock` を実行し、生成差分を一緒にコミットする。
+CIは `gh actions-lock --verify` で整合性と参照元を検証する。DependabotによるAction更新でも対応するlockfileが更新される。
