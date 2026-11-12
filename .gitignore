@@ -2,7 +2,7 @@
 /build/generated/
 /frontend/node_modules/
 /frontend/dist/
-/frontend/wailsjs/
+/frontend/bindings/
 /frontend/coverage/
 *.syso
 *.tsbuildinfo
