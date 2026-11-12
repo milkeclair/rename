@@ -47,6 +47,8 @@ go test ./build/tests/...
 
 PRとmainへのpushでWindows CIがテスト・型・書式検査とビルドを実行する。
 別ドライブ間の移動テストには、ランナーのCドライブとDドライブを使用する。
+Wails CLIはGo・OS・アーキテクチャ・Wailsのバージョンごとに実行ファイルをキャッシュする。
+CLI導入時のGo依存・ビルド領域をアプリ用キャッシュから分離し、CLIの依存を毎回展開する負担を減らす。
 
 Actionの実行コミットは `.github/workflows/actions.lock` で固定する。
 Actionやワークフローを追加・変更したら、リポジトリルートで `gh actions-lock` を実行し、生成差分を一緒にコミットする。
