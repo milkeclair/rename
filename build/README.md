@@ -45,8 +45,12 @@ go test ./build/tests/...
 
 ## CI
 
-PRとmainへのpushでWindows CIがテスト・型・書式検査とビルドを実行する。
+PRとmainへのpushでは変更対象を調べ、README.md、build/README.md、docs/配下、Release workflowだけの差分はWindows検証を省略する。
+それ以外の変更、差分取得に失敗した場合、手動ReleaseではWindows CIがテスト・型・書式検査とビルドを実行する。
+変更検出のテスト、workflowの構文検査とactions-lock検証は毎回実行する。
 別ドライブ間の移動テストには、ランナーのCドライブとDドライブを使用する。
+Wails CLIはGo・OS・アーキテクチャ・Wailsのバージョンごとに実行ファイルをキャッシュする。
+CLI導入時のGo依存・ビルド領域をアプリ用キャッシュから分離し、CLIの依存を毎回展開する負担を減らす。
 
 Actionの実行コミットは `.github/workflows/actions.lock` で固定する。
 Actionやワークフローを追加・変更したら、リポジトリルートで `gh actions-lock` を実行し、生成差分を一緒にコミットする。
