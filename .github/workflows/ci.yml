@@ -1,0 +1,77 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_call:
+    inputs:
+      version:
+        type: string
+        required: false
+        default: ""
+
+permissions:
+  contents: read
+
+jobs:
+  windows:
+    runs-on: windows-2025
+    timeout-minutes: 30
+    defaults:
+      run:
+        shell: pwsh
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version-file: go.mod
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: frontend/.node-version
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - name: Prepare build tools
+        run: |
+          Add-Content -LiteralPath $env:GITHUB_PATH -Value 'C:\Program Files\LLVM\bin'
+          $wailsVersion = go list -m -f '{{.Version}}' github.com/wailsapp/wails/v2
+          if ($LASTEXITCODE -ne 0) { throw 'Wailsのバージョンを取得できませんでした。' }
+          go install "github.com/wailsapp/wails/v2/cmd/wails@$wailsVersion"
+      - name: Build Windows application
+        env:
+          RELEASE_VERSION: ${{ inputs.version }}
+        run: ./build/windows/build.ps1 -Version $env:RELEASE_VERSION
+      - name: Prepare second drive for tests
+        run: |
+          $sourceDrive = [System.IO.Path]::GetPathRoot($env:TEMP)
+          $otherDrive = @('C:\', 'D:\') | Where-Object { $_ -ne $sourceDrive -and (Test-Path -LiteralPath $_) } | Select-Object -First 1
+          if (-not $otherDrive) { throw '別ドライブのテストには実在する2つのドライブが必要です。' }
+          $otherDirectory = Join-Path $otherDrive 'rename-cross-volume-tests'
+          New-Item -ItemType Directory -Path $otherDirectory -Force | Out-Null
+          Add-Content -LiteralPath $env:GITHUB_ENV -Value "RENAME_TEST_OTHER_DIR=$otherDirectory"
+      - name: Test Go
+        run: go test -mod=readonly ./backend/tests/... ./build/tests/...
+      - name: Vet Go
+        run: go vet -mod=readonly ./backend/... ./build/...
+      - name: Test frontend
+        working-directory: frontend
+        run: npm test
+      - name: Test frontend scenarios
+        working-directory: frontend
+        run: npm run test:scenarios
+      - name: Check frontend formatting
+        working-directory: frontend
+        run: npm run format:check
+      - name: Verify release files
+        env:
+          RELEASE_VERSION: ${{ inputs.version }}
+        run: ./.github/scripts/package.ps1 -BinaryPath ./build/bin/rename.exe -Version $env:RELEASE_VERSION
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: rename-windows-amd64
+          path: |
+            build/bin/rename.exe
+            build/bin/SHA256SUMS
+          if-no-files-found: error
