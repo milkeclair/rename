@@ -1,0 +1,99 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_call:
+    inputs:
+      version:
+        type: string
+        required: false
+        default: ""
+
+permissions:
+  contents: read
+
+jobs:
+  lockfile:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v7.0.1
+        with:
+          persist-credentials: false
+      - name: Install actions-lock
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh extension install github/gh-actions-lock --pin v0.4.1
+      - name: Verify Actions lockfile
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh actions-lock --verify
+  windows:
+    runs-on: windows-2025
+    timeout-minutes: 30
+    defaults:
+      run:
+        shell: pwsh
+    steps:
+      - uses: actions/checkout@v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-go@v7.0.0
+        with:
+          go-version-file: go.mod
+      - uses: actions/setup-node@v7.1.0
+        with:
+          node-version-file: frontend/.node-version
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - name: Install LLVM resource tools
+        run: |
+          $archive = Join-Path $env:RUNNER_TEMP 'llvm-mingw.zip'
+          $tools = Join-Path $env:RUNNER_TEMP 'llvm-mingw'
+          Invoke-WebRequest 'https://github.com/mstorsjo/llvm-mingw/releases/download/20260908/llvm-mingw-20260908-ucrt-x86_64.zip' -OutFile $archive
+          if ((Get-FileHash -LiteralPath $archive -Algorithm SHA256).Hash -ne '1bcf74d06b724aeecaa6412ca85f5b26fb1da770e7cdcefa9263c9c5c3ad34b6') { throw 'LLVMのハッシュが一致しません。' }
+          Expand-Archive -LiteralPath $archive -DestinationPath $tools
+          Add-Content -LiteralPath $env:GITHUB_PATH -Value (Join-Path $tools 'llvm-mingw-20260908-ucrt-x86_64/bin')
+      - name: Install Wails CLI
+        run: |
+          $wailsVersion = go list -m -f '{{.Version}}' github.com/wailsapp/wails/v2
+          if ($LASTEXITCODE -ne 0) { throw 'Wailsのバージョンを取得できませんでした。' }
+          go install "github.com/wailsapp/wails/v2/cmd/wails@$wailsVersion"
+      - name: Build Windows application
+        env:
+          RELEASE_VERSION: ${{ inputs.version }}
+        run: ./build/windows/build.ps1 -Version $env:RELEASE_VERSION
+      - name: Prepare second drive for tests
+        run: |
+          $sourceDrive = [System.IO.Path]::GetPathRoot($env:TEMP)
+          $otherDrive = @('C:\', 'D:\') | Where-Object { $_ -ne $sourceDrive -and (Test-Path -LiteralPath $_) } | Select-Object -First 1
+          if (-not $otherDrive) { throw '別ドライブのテストには実在する2つのドライブが必要です。' }
+          $otherDirectory = Join-Path $otherDrive 'rename-cross-volume-tests'
+          New-Item -ItemType Directory -Path $otherDirectory -Force | Out-Null
+          Add-Content -LiteralPath $env:GITHUB_ENV -Value "RENAME_TEST_OTHER_DIR=$otherDirectory"
+      - name: Test Go
+        run: go test -mod=readonly ./backend/tests/... ./build/tests/...
+      - name: Vet Go
+        run: go vet -mod=readonly ./backend/... ./build/...
+      - name: Test frontend
+        working-directory: frontend
+        run: npm test
+      - name: Test frontend scenarios
+        working-directory: frontend
+        run: npm run test:scenarios
+      - name: Check frontend formatting
+        working-directory: frontend
+        run: npm run format:check
+      - name: Verify release files
+        env:
+          RELEASE_VERSION: ${{ inputs.version }}
+        run: ./.github/scripts/package.ps1 -BinaryPath ./build/bin/rename.exe -Version $env:RELEASE_VERSION
+      - uses: actions/upload-artifact@v7.0.2
+        with:
+          name: rename-windows-amd64
+          path: |
+            build/bin/rename.exe
+            build/bin/SHA256SUMS
+          if-no-files-found: error
