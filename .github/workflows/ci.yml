@@ -18,10 +18,35 @@ jobs:
   lockfile:
     runs-on: ubuntu-latest
     timeout-minutes: 5
+    defaults:
+      run:
+        shell: bash
+    outputs:
+      windows: ${{ steps.changes.outputs.windows }}
     steps:
       - uses: actions/checkout@v7.0.1
         with:
+          fetch-depth: 0
           persist-credentials: false
+      - name: Select Windows checks
+        id: changes
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          BASE_COMMIT: ${{ github.event.pull_request.base.sha || github.event.before }}
+          HEAD_COMMIT: ${{ github.sha }}
+          RELEASE_VERSION: ${{ inputs.version }}
+        run: |
+          windows=$(bash .github/scripts/windows-required.sh "$EVENT_NAME" "$BASE_COMMIT" "$HEAD_COMMIT" "$RELEASE_VERSION")
+          printf 'windows=%s\n' "$windows" >> "$GITHUB_OUTPUT"
+      - name: Test Windows check selection
+        run: python3 .github/tests/test_windows_required.py
+      - name: Check workflow syntax
+        run: |
+          archive="$RUNNER_TEMP/actionlint.tar.gz"
+          curl --fail --location --silent --show-error https://github.com/rhysd/actionlint/releases/download/v1.7.12/actionlint_1.7.12_linux_amd64.tar.gz --output "$archive"
+          printf '8aca8db96f1b94770f1b0d72b6dddcb1ebb8123cb3712530b08cc387b349a3d8  %s\n' "$archive" | sha256sum --check
+          tar -xzf "$archive" -C "$RUNNER_TEMP" actionlint
+          "$RUNNER_TEMP/actionlint"
       - name: Install actions-lock
         env:
           GH_TOKEN: ${{ github.token }}
@@ -31,6 +56,8 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: gh actions-lock --verify
   windows:
+    needs: lockfile
+    if: needs.lockfile.outputs.windows == 'true'
     runs-on: windows-2025
     timeout-minutes: 30
     defaults:
