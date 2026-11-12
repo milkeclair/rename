@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest';
 import {
   initialInput,
   addEntries,
+  addDirectoryEntries,
   sortInput,
   reorderInput,
   sorted,
@@ -44,6 +45,55 @@ describe('addEntries', () => {
     expect(addEntries(initialInput(), []).settings.outputDir).toBe('');
   });
 });
+describe('addDirectoryEntries', () => {
+  it('子フォルダ名と各ファイル名を自然順にし、既存の出力先と開始番号を維持する', () => {
+    const value = input();
+    value.entries = [];
+    value.settings = { pattern: '{番号}', start: '24', outputDir: 'D:/out' };
+    const added = [
+      entry('2.jpg', 'C:/parent/2'),
+      entry('10.jpg', 'C:/parent/1'),
+      entry('1.jpg', 'C:/parent/10'),
+      entry('1.jpg', 'C:/parent/2'),
+      entry('2.jpg', 'C:/parent/1'),
+      entry('1.jpg', 'C:/parent/1'),
+    ];
+    const imported = addDirectoryEntries(value, added);
+    expect(imported.entries.map((file) => file.path)).toEqual([
+      'C:/parent/1/1.jpg',
+      'C:/parent/1/2.jpg',
+      'C:/parent/1/10.jpg',
+      'C:/parent/2/1.jpg',
+      'C:/parent/2/2.jpg',
+      'C:/parent/10/1.jpg',
+    ]);
+    expect(imported.sort).toEqual({ field: 'directory', descending: false });
+    expect(imported.settings).toBe(value.settings);
+    expect(value.entries).toEqual([]);
+    expect(addDirectoryEntries(imported, added).entries).toHaveLength(6);
+  });
+  it('数値として同じフォルダ名でも各フォルダのまとまりを保つ', () => {
+    const value = { ...initialInput(), entries: [] };
+    const imported = addDirectoryEntries(value, [
+      entry('2.jpg', 'C:/parent/1'),
+      entry('1.jpg', 'C:/parent/01'),
+      entry('1.jpg', 'C:/parent/1'),
+      entry('2.jpg', 'C:/parent/01'),
+    ]);
+    expect(imported.entries.map((file) => file.path)).toEqual([
+      'C:/parent/01/1.jpg',
+      'C:/parent/01/2.jpg',
+      'C:/parent/1/1.jpg',
+      'C:/parent/1/2.jpg',
+    ]);
+  });
+  it('出力先が未指定でも子フォルダを出力先へ設定せず、空の取込では入力を保持する', () => {
+    const value = initialInput();
+    expect(addDirectoryEntries(value, [entry()]).settings.outputDir).toBe('');
+    expect(addDirectoryEntries(value, [])).toBe(value);
+  });
+});
+
 describe('sortInput', () => {
   it.each([false, true])('自然順と日時順を並べ替え、元配列を保持する: %s', (descending) => {
     const entries = [entry('10', 'C:/in', 1), entry('2', 'C:/in', 2)];
