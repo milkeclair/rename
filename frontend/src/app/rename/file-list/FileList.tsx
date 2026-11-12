@@ -46,7 +46,11 @@ export function FileList(props: Props) {
   }
 
   return (
-    <section className={styles.workspace} data-locked={locked}>
+    <section
+      className={styles.workspace}
+      data-locked={locked}
+      data-file-drop-target={locked ? undefined : ''}
+    >
       <FileToolbar
         count={entries.length}
         sort={sort}
