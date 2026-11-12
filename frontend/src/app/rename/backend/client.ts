@@ -1,5 +1,10 @@
-import { ChooseOutput, Execute, Inspect, Preview } from '../../../../wailsjs/go/app/App';
-import { EventsOn, OnFileDrop, OnFileDropOff } from '../../../../wailsjs/runtime/runtime';
+import {
+  ChooseOutput,
+  Execute,
+  Inspect,
+  Preview,
+} from '../../../../bindings/github.com/milkeclair/rename/backend/app/app';
+import { Events } from '@wailsio/runtime';
 import type { Entry, Plan, Progress, Request, Result } from '../model/types';
 
 export const renameBackend: {
@@ -8,20 +13,30 @@ export const renameBackend: {
   execute: (request: Request) => Promise<Result>;
   chooseOutput: () => Promise<string>;
 } = {
-  inspect: Inspect,
-  preview: Preview,
-  execute: Execute,
+  inspect: async (paths) => (await Inspect(paths)) ?? [],
+  preview: async (request) => {
+    const plan = await Preview(request);
+    return { ...plan, items: plan.items ?? [] };
+  },
+  execute: async (request) => {
+    const result = await Execute(request);
+    return { ...result, items: result.items ?? [] };
+  },
   chooseOutput: ChooseOutput,
 };
 
 export function subscribeToFiles(onDrop: (paths: string[]) => void): () => void {
-  OnFileDrop((_x, _y, paths) => onDrop(paths), true);
-  return OnFileDropOff;
+  return Events.On('rename:files-dropped', (event) => {
+    const paths: unknown = event.data;
+    if (Array.isArray(paths) && paths.every((path: unknown) => typeof path === 'string')) {
+      onDrop(paths);
+    }
+  });
 }
 
 export function subscribeToProgress(onProgress: (progress: Progress) => void): () => void {
-  return EventsOn('rename:progress', (value: unknown) => {
-    const progress = parseProgress(value);
+  return Events.On('rename:progress', (event) => {
+    const progress = parseProgress(event.data);
 
     if (progress) {
       onProgress(progress);

@@ -1,20 +1,40 @@
 package app
 
 import (
-	"context"
-	"github.com/wailsapp/wails/v2"
-	"github.com/wailsapp/wails/v2/pkg/options"
-	"github.com/wailsapp/wails/v2/pkg/runtime"
 	"log"
+
+	"github.com/milkeclair/rename/backend/internal/renamer"
+	"github.com/wailsapp/wails/v3/pkg/application"
+	"github.com/wailsapp/wails/v3/pkg/events"
 )
 
 type Host struct {
-	Run                 func(*options.App) error
-	OpenDirectoryDialog func(context.Context, runtime.OpenDialogOptions) (string, error)
-	EventsEmit          func(context.Context, string, ...interface{})
+	Run                 func(application.Options, application.WebviewWindowOptions, func() bool) error
+	OpenDirectoryDialog func(application.OpenFileDialogOptions) (string, error)
+	EventsEmit          func(string, renamer.Progress)
 	Fatal               func(...interface{})
 }
 
 func NativeHost() Host {
-	return Host{Run: wails.Run, OpenDirectoryDialog: runtime.OpenDirectoryDialog, EventsEmit: runtime.EventsEmit, Fatal: log.Fatal}
+	var native *application.App
+	return Host{
+		Run: func(options application.Options, windowOptions application.WebviewWindowOptions, beforeClose func() bool) error {
+			native = application.New(options)
+			window := native.Window.NewWithOptions(windowOptions)
+			window.RegisterHook(events.Common.WindowClosing, func(event *application.WindowEvent) {
+				if beforeClose() {
+					event.Cancel()
+				}
+			})
+			window.OnWindowEvent(events.Common.WindowFilesDropped, func(event *application.WindowEvent) {
+				native.Event.Emit("rename:files-dropped", event.Context().DroppedFiles())
+			})
+			return native.Run()
+		},
+		OpenDirectoryDialog: func(options application.OpenFileDialogOptions) (string, error) {
+			return native.Dialog.OpenFileWithOptions(&options).PromptForSingleSelection()
+		},
+		EventsEmit: func(name string, progress renamer.Progress) { native.Event.Emit(name, progress) },
+		Fatal:      log.Fatal,
+	}
 }

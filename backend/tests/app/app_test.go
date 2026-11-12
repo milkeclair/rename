@@ -3,15 +3,15 @@
 package app_test
 
 import (
-	"context"
 	"errors"
+	"path/filepath"
+	"testing"
+	"testing/fstest"
+
 	a "github.com/milkeclair/rename/backend/app"
 	r "github.com/milkeclair/rename/backend/internal/renamer"
 	s "github.com/milkeclair/rename/backend/tests/support"
-	"github.com/wailsapp/wails/v2/pkg/options"
-	"github.com/wailsapp/wails/v2/pkg/runtime"
-	"path/filepath"
-	"testing"
+	"github.com/wailsapp/wails/v3/pkg/application"
 )
 
 func TestNewAppInspectAndPreview(t *testing.T) {
@@ -27,95 +27,80 @@ func TestNewAppInspectAndPreview(t *testing.T) {
 		t.Fatalf("%+v", plan)
 	}
 }
-func TestStartupAndChooseOutput(t *testing.T) {
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
+
+func TestChooseOutput(t *testing.T) {
 	want := errors.New("dialog error")
-	host := a.Host{OpenDirectoryDialog: func(actual context.Context, options runtime.OpenDialogOptions) (string, error) {
-		if actual != ctx || options.Title != "出力先フォルダを選択" {
-			t.Fatal("context/options not passed")
+	app := a.NewApp(a.Host{OpenDirectoryDialog: func(options application.OpenFileDialogOptions) (string, error) {
+		if options.Title != "出力先フォルダを選択" || !options.CanChooseDirectories || options.CanChooseFiles {
+			t.Fatalf("wrong options: %+v", options)
 		}
 		return "D:/out", want
-	}}
-	host.Run = func(options *options.App) error {
-		options.OnStartup(ctx)
-		app, ok := options.Bind[0].(*a.App)
-		if !ok {
-			t.Fatal("wrong binding")
-		}
-		got, err := app.ChooseOutput()
-		if got != "D:/out" || err != want {
-			t.Fatalf("%s %v", got, err)
-		}
-		return nil
+	}})
+	got, err := app.ChooseOutput()
+	if got != "D:/out" || err != want {
+		t.Fatalf("%s %v", got, err)
 	}
-	a.Run(nil, host)
 }
+
 func TestExecuteLockProgressAndBeforeClose(t *testing.T) {
-	ctx := context.Background()
 	dir := t.TempDir()
 	source := s.Write(t, dir, "a", "a")
 	request := r.Request{Paths: []string{source}, Pattern: "{番号}", Start: 1, OutputDir: dir}
 	calls := 0
-	host := a.Host{}
-	host.Run = func(options *options.App) error {
-		options.OnStartup(ctx)
-		app, ok := options.Bind[0].(*a.App)
-		if !ok {
-			t.Fatal("wrong binding")
+	host := a.Host{EventsEmit: func(name string, progress r.Progress) {
+		calls++
+		if name != "rename:progress" || progress.Completed != 1 || progress.Total != 1 {
+			t.Fatalf("%s %+v", name, progress)
 		}
-		if options.OnBeforeClose(ctx) {
+	}}
+	host.Run = func(options application.Options, _ application.WebviewWindowOptions, beforeClose func() bool) error {
+		app, ok := options.Services[0].Instance().(*a.App)
+		if !ok {
+			t.Fatal("wrong service")
+		}
+		if beforeClose() || !options.ShouldQuit() {
 			t.Fatal("idle window blocked")
 		}
 		result, err := app.Execute(request)
 		if err != nil || result.Items[0].Status != r.StatusDone {
 			t.Fatalf("%+v %v", result, err)
 		}
-		if options.OnBeforeClose(ctx) {
+		if beforeClose() || !options.ShouldQuit() {
 			t.Fatal("lock not released")
 		}
 		return nil
 	}
-	host.EventsEmit = func(actual context.Context, name string, values ...interface{}) {
-		calls++
-		if actual != ctx || name != "rename:progress" || len(values) != 1 {
-			t.Fatal("invalid event")
-		}
-		progress, ok := values[0].(r.Progress)
-		if !ok || progress.Completed != 1 || progress.Total != 1 {
-			t.Fatalf("%v", values)
-		}
-	}
-	a.Run(nil, host)
+	a.Run(fstest.MapFS{"index.html": {Data: []byte("app")}}, host)
 	if calls != 1 {
 		t.Fatalf("progress calls %d", calls)
 	}
 }
+
 func TestExecuteRejectsReentry(t *testing.T) {
-	ctx := context.Background()
 	dir := t.TempDir()
 	source := s.Write(t, dir, "a", "a")
 	request := r.Request{Paths: []string{source}, Pattern: "{番号}", Start: 1, OutputDir: dir}
 	var bound *a.App
-	var beforeClose func(context.Context) bool
-	host := a.Host{EventsEmit: func(context.Context, string, ...interface{}) {
-		if !beforeClose(ctx) {
+	var beforeClose func() bool
+	var shouldQuit func() bool
+	host := a.Host{EventsEmit: func(string, r.Progress) {
+		if !beforeClose() || shouldQuit() {
 			t.Fatal("active window can close")
 		}
 		if _, err := bound.Execute(request); err == nil {
 			t.Fatal("reentry allowed")
 		}
 	}}
-	host.Run = func(options *options.App) error {
-		options.OnStartup(ctx)
+	host.Run = func(options application.Options, _ application.WebviewWindowOptions, closing func() bool) error {
 		var ok bool
-		bound, ok = options.Bind[0].(*a.App)
+		bound, ok = options.Services[0].Instance().(*a.App)
 		if !ok {
-			t.Fatal("wrong binding")
+			t.Fatal("wrong service")
 		}
-		beforeClose = options.OnBeforeClose
+		beforeClose = closing
+		shouldQuit = options.ShouldQuit
 		_, err := bound.Execute(request)
 		return err
 	}
-	a.Run(nil, host)
+	a.Run(fstest.MapFS{"index.html": {Data: []byte("app")}}, host)
 }

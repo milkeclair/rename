@@ -58,9 +58,9 @@ jobs:
           Add-Content -LiteralPath $env:GITHUB_PATH -Value (Join-Path $tools 'llvm-mingw-20260908-ucrt-x86_64/bin')
       - name: Install Wails CLI
         run: |
-          $wailsVersion = go list -m -f '{{.Version}}' github.com/wailsapp/wails/v2
+          $wailsVersion = go list -m -f '{{.Version}}' github.com/wailsapp/wails/v3
           if ($LASTEXITCODE -ne 0) { throw 'Wailsのバージョンを取得できませんでした。' }
-          go install "github.com/wailsapp/wails/v2/cmd/wails@$wailsVersion"
+          go install "github.com/wailsapp/wails/v3/cmd/wails3@$wailsVersion"
       - name: Build Windows application
         env:
           RELEASE_VERSION: ${{ inputs.version }}
