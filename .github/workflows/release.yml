@@ -55,9 +55,11 @@ jobs:
             exit 1
           fi
           git merge-base --is-ancestor HEAD origin/main
-          printf 'commit=%s\n' "$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
-          printf 'version=%s\n' "$RELEASE_VERSION" >> "$GITHUB_OUTPUT"
-          printf 'tag=%s\n' "$tag" >> "$GITHUB_OUTPUT"
+          {
+            printf 'commit=%s\n' "$(git rev-parse HEAD)"
+            printf 'version=%s\n' "$RELEASE_VERSION"
+            printf 'tag=%s\n' "$tag"
+          } >> "$GITHUB_OUTPUT"
   build:
     needs: prepare
     uses: ./.github/workflows/ci.yml
