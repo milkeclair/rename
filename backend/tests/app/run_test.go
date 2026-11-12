@@ -4,29 +4,32 @@ package app_test
 
 import (
 	"errors"
-	a "github.com/milkeclair/rename/backend/app"
-	"github.com/wailsapp/wails/v2/pkg/options"
+	"net/http/httptest"
+	"strings"
 	"testing"
 	"testing/fstest"
+
+	a "github.com/milkeclair/rename/backend/app"
+	"github.com/wailsapp/wails/v3/pkg/application"
 )
 
 func TestRun(t *testing.T) {
 	assets := fstest.MapFS{"index.html": {Data: []byte("app")}}
 	calls := 0
-	a.Run(assets, a.Host{Run: func(options *options.App) error {
+	a.Run(assets, a.Host{Run: func(options application.Options, window application.WebviewWindowOptions, beforeClose func() bool) error {
 		calls++
-		if options.Title != "rename" || options.Width != 1100 || options.Height != 800 || options.MinWidth != 800 || options.MinHeight != 650 {
-			t.Fatalf("wrong window options: %+v", options)
+		if options.Name != "rename" || window.Title != "rename" || window.Width != 1100 || window.Height != 800 || window.MinWidth != 800 || window.MinHeight != 650 {
+			t.Fatalf("wrong window options: %+v", window)
 		}
-		if options.AssetServer.Assets == nil || !options.DragAndDrop.EnableFileDrop || !options.Windows.DisableWindowIcon {
+		if options.Assets.Handler == nil || !window.EnableFileDrop || !window.Windows.DisableIcon {
 			t.Fatal("asset/drop/icon options missing")
 		}
-		file, err := options.AssetServer.Assets.Open("index.html")
-		if err != nil {
-			t.Fatal(err)
+		response := httptest.NewRecorder()
+		options.Assets.Handler.ServeHTTP(response, httptest.NewRequest("GET", "/", nil))
+		if response.Code != 200 || !strings.Contains(response.Body.String(), "app") {
+			t.Fatalf("assets unavailable: %d %s", response.Code, response.Body.String())
 		}
-		file.Close()
-		if options.OnStartup == nil || options.OnBeforeClose == nil || len(options.Bind) != 1 {
+		if beforeClose == nil || options.ShouldQuit == nil || len(options.Services) != 1 {
 			t.Fatal("lifecycle missing")
 		}
 		return nil
@@ -35,15 +38,19 @@ func TestRun(t *testing.T) {
 		t.Fatalf("launch calls=%d", calls)
 	}
 }
+
 func TestRunFailure(t *testing.T) {
 	want := errors.New("startup failure")
 	calls := 0
-	a.Run(nil, a.Host{Run: func(*options.App) error { return want }, Fatal: func(values ...interface{}) {
-		calls++
-		if len(values) != 1 || values[0] != want {
-			t.Fatalf("%v", values)
-		}
-	}})
+	a.Run(fstest.MapFS{"index.html": {Data: []byte("app")}}, a.Host{
+		Run: func(application.Options, application.WebviewWindowOptions, func() bool) error { return want },
+		Fatal: func(values ...interface{}) {
+			calls++
+			if len(values) != 1 || values[0] != want {
+				t.Fatalf("%v", values)
+			}
+		},
+	})
 	if calls != 1 {
 		t.Fatal("startup error lost")
 	}
