@@ -46,7 +46,7 @@ describe('reducer', () => {
     },
     { action: { type: 'message', message: 'hello' }, expected: { message: 'hello' } },
     {
-      action: { type: 'clear', revision: 2 },
+      action: { type: 'clear', reset: { start: true, outputDir: true }, revision: 2 },
       expected: {
         input: { entries: [] },
         preview: { items: [], issue: '' },
@@ -97,12 +97,36 @@ describe('reducer', () => {
 });
 
 describe('reducer: clear', () => {
+  it.each([
+    { start: true, outputDir: true },
+    { start: true, outputDir: false },
+    { start: false, outputDir: true },
+    { start: false, outputDir: false },
+  ])('番号と出力先を個別にリセットする: %j', (reset) => {
+    const value = state();
+    value.input.settings = { start: '24', pattern: 'photo-{番号:0000}', outputDir: 'D:/out' };
+    value.execution = { status: 'result', result: { items: [resultItem()], issue: '' } };
+    const next = reducer(value, { type: 'clear', reset, revision: 4 });
+    expect(next.input.entries).toEqual([]);
+    expect(next.input.settings).toEqual({
+      start: reset.start ? '1' : '24',
+      outputDir: reset.outputDir ? '' : 'D:/out',
+      pattern: 'photo-{番号:0000}',
+    });
+    expect(next.execution).toEqual({ status: 'editing' });
+    expect(next.message).toBe('');
+  });
+
   it('一覧と出力先を空にし番号を1へ戻すが形式と並び順は保持する', () => {
     const value = state();
     value.input.settings = { start: '24', pattern: 'photo-{番号:0000}', outputDir: 'D:/out' };
     value.input.sort = { field: 'created', descending: true };
 
-    const next = reducer(value, { type: 'clear', revision: 4 });
+    const next = reducer(value, {
+      type: 'clear',
+      reset: { start: true, outputDir: true },
+      revision: 4,
+    });
 
     expect(next.input).toEqual({
       entries: [],

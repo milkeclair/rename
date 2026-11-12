@@ -29,6 +29,7 @@ describe('Rename', () => {
     if (mode === 'result')
       value.execution = { status: 'result', result: { items: [resultItem()], issue: '' } };
     const api = {
+      reset: { settings: { start: true, outputDir: true }, update: vi.fn(), message: '' },
       state: value,
       canExecute: mode === 'editing',
       execute: vi.fn(async () => {}),
@@ -67,6 +68,7 @@ describe('Rename: clear availability', () => {
     value.input.settings = { ...value.input.settings, start: '24', outputDir: 'D:/out' };
     value.imports = imports;
     vi.mocked(useRename).mockReturnValue({
+      reset: { settings: { start: true, outputDir: true }, update: vi.fn(), message: '' },
       state: value,
       canExecute: false,
       execute: vi.fn(async () => {}),

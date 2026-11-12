@@ -1,3 +1,4 @@
+import type { ResetSettings } from '../settings/useResetSettings';
 import type { RenameInput } from '../model/input';
 import type { Entry, Plan, Progress, Request, Result, Settings, Sort } from '../model/types';
 
@@ -33,4 +34,4 @@ export type Action =
   | { type: 'finished'; request: Request; result: Result }
   | { type: 'execution-failed'; message: string; revision: number }
   | { type: 'message'; message: string }
-  | { type: 'clear'; revision: number };
+  | { type: 'clear'; reset: ResetSettings; revision: number };
