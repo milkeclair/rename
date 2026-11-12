@@ -52,18 +52,20 @@ Actionの実行コミットは `.github/workflows/actions.lock` で固定する�
 Actionやワークフローを追加・変更したら、リポジトリルートで `gh actions-lock` を実行し、生成差分を一緒にコミットする。
 CIは `gh actions-lock --verify` で整合性と参照元を検証する。DependabotによるAction更新でも対応するlockfileが更新される。
 
-## 自動リリース
+## 手動リリース
 
-mainに取り込まれたコミットへ `v0.1.0` のようなタグをpushすると、同じ検証後にGitHub Releaseを公開する。
-公開するコミットをmainに取り込んだ後、リポジトリルートで実行する。
+GitHubのActions → Release → Run workflowで、branchに `main`、versionに `1.0.1` のようなバージョンを指定する。
+手動実行時のmainを同じCIで検証し、成功後に `v1.0.1` タグを作成してGitHub Releaseを公開する。
+CLIからも実行できる。
 
 ```sh
-git tag -a v0.1.0 main -m "Release v0.1.0"
-git push origin v0.1.0
+gh workflow run release.yml --ref main -f version=1.0.1
 ```
 
-タグは `vX.Y.Z` 形式で、各数値は0〜65535。EXEの製品バージョンにはタグの値を使用する。
+versionは `X.Y.Z` 形式で、各数値は0〜65535。先頭のvと不要な先頭ゼロは付けない。
+既存タグのバージョンは開始時に拒否し、入力値をEXEの製品バージョンに使用する。
 
 配布ファイルは `rename.exe` と `SHA256SUMS`。GitHubのimmutable releasesを有効にし、ドラフト作成・全ファイル添付・公開の順で固定する。
 公開済みのタグやファイルは保持し、修正は新しいバージョンで公開する。
-公開前の失敗でドラフトが残った場合は、内容を確認してドラフトを削除してから再実行する。
+公開前の失敗でドラフトが残った場合は、内容を確認してドラフトを削除してから、Actionsの「Re-run failed jobs」で公開ジョブを再実行する。
+その実行が作成したタグは同じコミットを指すことを確認して再利用する。
