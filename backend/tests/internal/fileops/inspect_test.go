@@ -26,6 +26,31 @@ func TestInputFiles(t *testing.T) {
 		t.Fatal("missing accepted")
 	}
 }
+func TestChildDirectories(t *testing.T) {
+	parent := t.TempDir()
+	first := filepath.Join(parent, "1")
+	second := filepath.Join(parent, "2")
+	for _, dir := range []string{second, first} {
+		if err := os.Mkdir(dir, 0700); err != nil {
+			t.Fatal(err)
+		}
+	}
+	file := s.Write(t, parent, "root.jpg", "root")
+	got, err := f.ChildDirectories(parent)
+	if err != nil || !reflect.DeepEqual(got, []string{first, second}) {
+		t.Fatalf("%v %v", got, err)
+	}
+	for _, input := range []string{file, filepath.Join(parent, "missing"), ""} {
+		if _, err := f.ChildDirectories(input); err == nil {
+			t.Fatalf("accepted %q", input)
+		}
+	}
+	empty, err := f.ChildDirectories(t.TempDir())
+	if err != nil || empty == nil || len(empty) != 0 {
+		t.Fatalf("%v %v", empty, err)
+	}
+}
+
 func TestInspectFile(t *testing.T) {
 	dir := t.TempDir()
 	path := s.Write(t, dir, "a.txt", "a")
