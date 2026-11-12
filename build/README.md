@@ -50,3 +50,19 @@ PRとmainへのpushでWindows CIがテスト・型・書式検査とビルドを
 Actionの実行コミットは `.github/workflows/actions.lock` で固定する。
 Actionやワークフローを追加・変更したら、リポジトリルートで `gh actions-lock` を実行し、生成差分を一緒にコミットする。
 CIは `gh actions-lock --verify` で整合性と参照元を検証する。DependabotによるAction更新でも対応するlockfileが更新される。
+
+## 自動リリース
+
+mainに取り込まれたコミットへ `v0.1.0` のようなタグをpushすると、同じ検証後にGitHub Releaseを公開する。
+公開するコミットをmainに取り込んだ後、リポジトリルートで実行する。
+
+```sh
+git tag -a v0.1.0 main -m "Release v0.1.0"
+git push origin v0.1.0
+```
+
+タグは `vX.Y.Z` 形式で、各数値は0〜65535。EXEの製品バージョンにはタグの値を使用する。
+
+配布ファイルは `rename.exe` と `SHA256SUMS`。GitHubのimmutable releasesを有効にし、ドラフト作成・全ファイル添付・公開の順で固定する。
+公開済みのタグやファイルは保持し、修正は新しいバージョンで公開する。
+公開前の失敗でドラフトが残った場合は、内容を確認してドラフトを削除してから再実行する。
