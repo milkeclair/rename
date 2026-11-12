@@ -34,6 +34,7 @@ describe('Rename', () => {
       canExecute: mode === 'editing',
       execute: vi.fn(async () => {}),
       chooseOutput: vi.fn(async () => {}),
+      chooseParent: vi.fn(async () => {}),
       clear: vi.fn(),
       setSettings: vi.fn(),
       setSort: vi.fn(),
@@ -46,6 +47,8 @@ describe('Rename', () => {
       entries: value.input.entries,
       locked: mode !== 'editing',
       canClear: mode !== 'running',
+      onChooseParent: api.chooseParent,
+      canImport: mode === 'editing',
       onRemove: api.remove,
       onReorder: api.reorder,
     });
@@ -73,6 +76,7 @@ describe('Rename: clear availability', () => {
       canExecute: false,
       execute: vi.fn(async () => {}),
       chooseOutput: vi.fn(async () => {}),
+      chooseParent: vi.fn(async () => {}),
       clear: vi.fn(),
       setSettings: vi.fn(),
       setSort: vi.fn(),
@@ -83,5 +87,6 @@ describe('Rename: clear availability', () => {
     render(<Rename />);
 
     expect(vi.mocked(FileList).mock.calls[0]?.[0].canClear).toBe(imports === 0);
+    expect(vi.mocked(FileList).mock.calls[0]?.[0].canImport).toBe(imports === 0);
   });
 });

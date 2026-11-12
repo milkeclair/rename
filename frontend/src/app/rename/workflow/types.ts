@@ -26,7 +26,8 @@ export type InputChange =
 export type Action =
   | { type: 'input'; change: InputChange; revision: number }
   | { type: 'import-started'; revision: number }
-  | { type: 'imported'; entries: Entry[]; revision: number }
+  | { type: 'imported' | 'directories-imported'; entries: Entry[]; revision: number }
+  | { type: 'import-cancelled'; revision: number }
   | { type: 'import-failed'; message: string; revision: number }
   | { type: 'preview'; plan: Plan; revision: number }
   | { type: 'started'; request: Request }

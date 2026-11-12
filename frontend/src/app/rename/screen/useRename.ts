@@ -5,6 +5,7 @@ import { useInteraction } from '../workflow/useInteraction';
 import type { InputChange } from '../workflow/types';
 import type { Settings, Sort } from '../model/types';
 import { useFileImport } from '../file-list/useFileImport';
+import { useDirectoryImport } from '../file-list/useDirectoryImport';
 import { usePreview } from '../file-list/preview/usePreview';
 import { useOutputDirectory } from '../settings/useOutputDirectory';
 import { useExecution } from '../execution/useExecution';
@@ -17,6 +18,7 @@ export function useRename() {
   const reset = useResetSettings();
   const execute = useExecution(state, dispatch, interaction);
   const chooseOutput = useOutputDirectory(dispatch, interaction);
+  const chooseParent = useDirectoryImport(dispatch, interaction);
 
   useFileImport(dispatch, interaction);
   usePreview(state, dispatch);
@@ -42,6 +44,7 @@ export function useRename() {
     canExecute: canExecute(state),
     execute,
     chooseOutput,
+    chooseParent,
     clear,
     setSettings: (settings: Settings) => edit({ type: 'settings', settings }),
     setSort: (sort: Sort) => edit({ type: 'sort', sort }),

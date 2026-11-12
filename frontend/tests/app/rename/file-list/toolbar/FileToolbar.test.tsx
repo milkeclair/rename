@@ -7,18 +7,21 @@ describe('FileToolbar', () => {
     const sort = { field: 'name' as const, descending: false };
     const onSort = vi.fn();
     const onClear = vi.fn();
+    const onChooseParent = vi.fn(async () => {});
     render(
       <FileToolbar
         count={3}
         sort={sort}
         disabled={false}
         canClear
+        canImport
+        onChooseParent={onChooseParent}
         onSort={onSort}
         onClear={onClear}
       />,
     );
     expect(screen.getByText('3')).toBeDefined();
-    ['created', 'manual', 'name'].forEach((field) => {
+    ['created', 'directory', 'manual', 'name'].forEach((field) => {
       fireEvent.change(screen.getByRole('combobox'), { target: { value: field } });
       expect(onSort).toHaveBeenLastCalledWith({ field, descending: false });
     });
@@ -26,6 +29,8 @@ describe('FileToolbar', () => {
     expect(onSort).toHaveBeenLastCalledWith({ field: 'name', descending: true });
     fireEvent.click(screen.getByRole('button', { name: 'クリア' }));
     expect(onClear).toHaveBeenCalledTimes(1);
+    fireEvent.click(screen.getByRole('button', { name: '親フォルダから追加' }));
+    expect(onChooseParent).toHaveBeenCalledTimes(1);
   });
   it('手動順では反転できずクリア不可を反映する', () => {
     render(
@@ -34,6 +39,8 @@ describe('FileToolbar', () => {
         sort={{ field: 'manual', descending: true }}
         disabled={false}
         canClear={false}
+        canImport={false}
+        onChooseParent={vi.fn(async () => {})}
         onSort={vi.fn()}
         onClear={vi.fn()}
       />,
@@ -48,10 +55,15 @@ describe('FileToolbar', () => {
         sort={{ field: 'name', descending: false }}
         disabled
         canClear={false}
+        canImport={false}
+        onChooseParent={vi.fn(async () => {})}
         onSort={vi.fn()}
         onClear={vi.fn()}
       />,
     );
     expect(screen.getByRole('combobox').hasAttribute('disabled')).toBe(true);
+    expect(
+      screen.getByRole('button', { name: '親フォルダから追加' }).hasAttribute('disabled'),
+    ).toBe(true);
   });
 });

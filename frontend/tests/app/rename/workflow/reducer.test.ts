@@ -138,3 +138,43 @@ describe('reducer: clear', () => {
     expect(value.input.settings.start).toBe('24');
   });
 });
+
+describe('親フォルダからの取込', () => {
+  it('設定を保持してフォルダ順に取り込み、空と取消で一覧を維持する', () => {
+    const original = state();
+    original.input.settings = { pattern: '{番号}', start: '24', outputDir: 'D:/out' };
+    const loading = reducer(original, { type: 'import-started', revision: 1 });
+    const imported = reducer(loading, {
+      type: 'directories-imported',
+      entries: [
+        entry('1.jpg', 'C:/parent/2'),
+        entry('2.jpg', 'C:/parent/1'),
+        entry('1.jpg', 'C:/parent/1'),
+      ],
+      revision: 2,
+    });
+    expect(imported.imports).toBe(0);
+    expect(imported.input.settings).toBe(original.input.settings);
+    expect(imported.input.entries.map((item) => item.path)).toEqual([
+      'C:/in/a.txt',
+      'C:/parent/1/1.jpg',
+      'C:/parent/1/2.jpg',
+      'C:/parent/2/1.jpg',
+    ]);
+    expect(imported.input.sort.field).toBe('directory');
+    const empty = reducer(reducer(imported, { type: 'import-started', revision: 3 }), {
+      type: 'directories-imported',
+      entries: [],
+      revision: 4,
+    });
+    expect(empty.input).toBe(imported.input);
+    expect(empty.message).toBe('子フォルダの直下に追加できるファイルがありません。');
+    const cancelled = reducer(reducer(imported, { type: 'import-started', revision: 5 }), {
+      type: 'import-cancelled',
+      revision: 6,
+    });
+    expect(cancelled.imports).toBe(0);
+    expect(cancelled.input).toBe(imported.input);
+    expect(cancelled.message).toBe('');
+  });
+});

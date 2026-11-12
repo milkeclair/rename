@@ -1,7 +1,9 @@
 import {
   ChooseOutput,
+  ChooseParent,
   Execute,
   Inspect,
+  InspectChildren,
   Preview,
 } from '../../../../bindings/github.com/milkeclair/rename/backend/app/app';
 import { Events } from '@wailsio/runtime';
@@ -9,11 +11,15 @@ import type { Entry, Plan, Progress, Request, Result } from '../model/types';
 
 export const renameBackend: {
   inspect: (paths: string[]) => Promise<Entry[]>;
+  inspectChildren: (path: string) => Promise<Entry[]>;
+  chooseParent: () => Promise<string>;
   preview: (request: Request) => Promise<Plan>;
   execute: (request: Request) => Promise<Result>;
   chooseOutput: () => Promise<string>;
 } = {
   inspect: async (paths) => (await Inspect(paths)) ?? [],
+  inspectChildren: async (path) => (await InspectChildren(path)) ?? [],
+  chooseParent: ChooseParent,
   preview: async (request) => {
     const plan = await Preview(request);
     return { ...plan, items: plan.items ?? [] };

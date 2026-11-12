@@ -4,7 +4,14 @@ import App from '../../src/app/App';
 import { renameBackend, subscribeToFiles } from '../../src/app/rename/backend/client';
 import { entry } from '../support/data';
 vi.mock('../../src/app/rename/backend/client', () => ({
-  renameBackend: { inspect: vi.fn(), preview: vi.fn(), execute: vi.fn(), chooseOutput: vi.fn() },
+  renameBackend: {
+    inspect: vi.fn(),
+    inspectChildren: vi.fn(),
+    chooseParent: vi.fn(),
+    preview: vi.fn(),
+    execute: vi.fn(),
+    chooseOutput: vi.fn(),
+  },
   subscribeToFiles: vi.fn(() => vi.fn()),
   subscribeToProgress: vi.fn(() => vi.fn()),
 }));
@@ -108,5 +115,69 @@ describe('設定モーダルからクリアまで', () => {
     const outputDir = screen.getByLabelText<HTMLInputElement>('出力先フォルダを空にする');
     expect(start.checked).toBe(reset.start);
     expect(outputDir.checked).toBe(reset.outputDir);
+  });
+});
+
+describe('親フォルダから通し番号へのリネーム', () => {
+  it('子フォルダ順で取り込み、指定した出力先へ1〜4の連番を適用する', async () => {
+    vi.mocked(renameBackend.chooseParent).mockResolvedValue('C:/parent');
+    vi.mocked(renameBackend.inspectChildren).mockResolvedValue([
+      entry('2.jpg', 'C:/parent/2'),
+      entry('1.jpg', 'C:/parent/2'),
+      entry('2.jpg', 'C:/parent/1'),
+      entry('1.jpg', 'C:/parent/1'),
+    ]);
+    vi.mocked(renameBackend.preview).mockImplementation(async (request) => ({
+      items: request.paths.map((source, index) => ({
+        source,
+        destination: `${request.outputDir}/${request.start + index}.jpg`,
+        name: `${request.start + index}.jpg`,
+        issue: '',
+      })),
+      issue: '',
+    }));
+    vi.mocked(renameBackend.execute).mockImplementation(async (request) => ({
+      items: request.paths.map((source, index) => ({
+        source,
+        destination: `${request.outputDir}/${request.start + index}.jpg`,
+        currentPath: `${request.outputDir}/${request.start + index}.jpg`,
+        status: 'done',
+        issue: '',
+      })),
+      issue: '',
+    }));
+    render(<App />);
+    fireEvent.change(screen.getByLabelText('連番形式'), { target: { value: '{番号}' } });
+    fireEvent.change(screen.getByLabelText('出力先フォルダ'), { target: { value: 'D:/chosen' } });
+    fireEvent.click(screen.getByRole('button', { name: '親フォルダから追加' }));
+    await waitFor(() => expect(screen.getAllByRole('row')).toHaveLength(5));
+    expect(screen.getByRole<HTMLSelectElement>('combobox').value).toBe('directory');
+    expect(screen.getByLabelText<HTMLInputElement>('出力先フォルダ').value).toBe('D:/chosen');
+    await waitFor(() =>
+      expect(screen.getByRole('button', { name: 'リネーム実行' }).hasAttribute('disabled')).toBe(
+        false,
+      ),
+    );
+    const paths = [
+      'C:/parent/1/1.jpg',
+      'C:/parent/1/2.jpg',
+      'C:/parent/2/1.jpg',
+      'C:/parent/2/2.jpg',
+    ];
+    expect(renameBackend.preview).toHaveBeenLastCalledWith({
+      paths,
+      pattern: '{番号}',
+      start: 1,
+      outputDir: 'D:/chosen',
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'リネーム実行' }));
+    await screen.findByText('4件のリネームが完了しました');
+    expect(renameBackend.execute).toHaveBeenCalledExactlyOnceWith({
+      paths,
+      pattern: '{番号}',
+      start: 1,
+      outputDir: 'D:/chosen',
+    });
+    expect(screen.getByLabelText<HTMLInputElement>('開始番号').value).toBe('5');
   });
 });
