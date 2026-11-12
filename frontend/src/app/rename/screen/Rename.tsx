@@ -1,6 +1,7 @@
 import { executionFeedback } from '../execution-footer/executionFeedback';
 import { FileList } from '../file-list';
 import { RenameSettings } from '../settings';
+import { ResetSettings } from '../settings/ResetSettings';
 import { ExecutionFooter } from '../execution-footer';
 import { useRename } from './useRename';
 import styles from './Rename.module.css';
@@ -13,6 +14,12 @@ export function Rename() {
 
   return (
     <main className={styles.main}>
+      <ResetSettings
+        settings={rename.reset.settings}
+        onChange={rename.reset.update}
+        message={rename.reset.message}
+        disabled={!canClear}
+      />
       <FileList
         entries={state.input.entries}
         plan={state.preview ?? { items: [], issue: '' }}

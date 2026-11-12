@@ -1,0 +1,55 @@
+.trigger {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.dialog {
+  width: min(460px, calc(100vw - 48px));
+  max-height: calc(100vh - 48px);
+  overflow: auto;
+  padding: 26px;
+  border: 1px solid #d8e0eb;
+  border-radius: 12px;
+  color: #273449;
+  background: #fff;
+  box-shadow: 0 20px 60px #27344933;
+}
+
+.dialog::backdrop {
+  background: #27344966;
+}
+
+.dialog h2 {
+  margin: 0 0 12px;
+  font-size: 19px;
+}
+
+.dialog p {
+  font-size: 13px;
+  line-height: 1.7;
+}
+
+.option {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 0;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.option input {
+  width: 17px;
+  height: 17px;
+  accent-color: #4169be;
+}
+
+.hint {
+  color: #65748b;
+}
+
+.actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 20px;
+}

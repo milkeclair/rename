@@ -13,7 +13,10 @@ vi.mock('../../../../src/app/rename/execution/useExecution', () => ({ useExecuti
 vi.mock('../../../../src/app/rename/settings/useOutputDirectory', () => ({
   useOutputDirectory: vi.fn(),
 }));
-beforeEach(() => vi.clearAllMocks());
+beforeEach(() => {
+  vi.clearAllMocks();
+  localStorage.clear();
+});
 describe('useRename', () => {
   it('設定・並替・除外を編集状態へ反映する', () => {
     vi.mocked(useInteraction).mockReturnValue(interaction());
@@ -40,6 +43,26 @@ describe('useRename', () => {
       start: '1',
       pattern: '{番号}',
       outputDir: '',
+    });
+  });
+  it('保持する設定をクリアと次回のファイル追加に適用する', () => {
+    vi.mocked(useInteraction).mockReturnValue(interaction());
+    const hook = renderHook(useRename);
+    const dispatch = vi.mocked(useFileImport).mock.calls[0]?.[0];
+    if (!dispatch) throw new Error('入力hookがありません');
+    act(() =>
+      hook.result.current.setSettings({ start: '24', pattern: '{番号}', outputDir: 'D:/out' }),
+    );
+    act(() => hook.result.current.reset.update({ start: false, outputDir: false }));
+    act(() => hook.result.current.clear());
+    act(() => {
+      dispatch({ type: 'import-started', revision: 2 });
+      dispatch({ type: 'imported', entries: [entry('next')], revision: 3 });
+    });
+    expect(hook.result.current.state.input.settings).toEqual({
+      start: '24',
+      pattern: '{番号}',
+      outputDir: 'D:/out',
     });
   });
   it('ロックと読込中は編集やクリアを拒否する', () => {

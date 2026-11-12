@@ -80,7 +80,11 @@ export function reducer(state: RenameState, action: Action): RenameState {
         input: {
           ...state.input,
           entries: [],
-          settings: { ...state.input.settings, start: '1', outputDir: '' },
+          settings: {
+            ...state.input.settings,
+            start: action.reset.start ? '1' : state.input.settings.start,
+            outputDir: action.reset.outputDir ? '' : state.input.settings.outputDir,
+          },
         },
         execution: { status: 'editing' },
         preview: { items: [], issue: '' },

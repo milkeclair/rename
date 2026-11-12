@@ -1,4 +1,4 @@
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, fireEvent, act, waitFor } from '@testing-library/react';
 import App from '../../src/app/App';
 import { renameBackend, subscribeToFiles } from '../../src/app/rename/backend/client';
@@ -8,6 +8,9 @@ vi.mock('../../src/app/rename/backend/client', () => ({
   subscribeToFiles: vi.fn(() => vi.fn()),
   subscribeToProgress: vi.fn(() => vi.fn()),
 }));
+beforeEach(() => localStorage.clear());
+afterEach(() => localStorage.clear());
+
 describe('入力から実行と次番号まで', () => {
   it.each(['選択', '直接入力'])(
     '%sした出力先・指定順・実行結果を保持して次番号へ進む',
@@ -73,4 +76,37 @@ describe('入力から実行と次番号まで', () => {
       expect(screen.getByLabelText('開始番号').getAttribute('value')).toBe('1');
     },
   );
+});
+
+describe('設定モーダルからクリアまで', () => {
+  it.each([
+    { start: true, outputDir: true },
+    { start: true, outputDir: false },
+    { start: false, outputDir: true },
+    { start: false, outputDir: false },
+  ])('選択した項目だけリセットし再起動後も設定を保持する: %j', (reset) => {
+    const app = render(<App />);
+    fireEvent.change(screen.getByLabelText('開始番号'), { target: { value: '24' } });
+    fireEvent.change(screen.getByLabelText('出力先フォルダ'), { target: { value: 'D:/out' } });
+    const dialog = document.querySelector('dialog');
+    if (!dialog) throw new Error('設定モーダルがありません');
+    dialog.showModal = () => dialog.setAttribute('open', '');
+    dialog.close = () => dialog.removeAttribute('open');
+    fireEvent.click(screen.getByRole('button', { name: '設定' }));
+    if (!reset.start) fireEvent.click(screen.getByLabelText('開始番号を1に戻す'));
+    if (!reset.outputDir) fireEvent.click(screen.getByLabelText('出力先フォルダを空にする'));
+    fireEvent.click(screen.getByRole('button', { name: '閉じる' }));
+    fireEvent.click(screen.getByRole('button', { name: 'クリア' }));
+    expect(screen.getByLabelText('開始番号').getAttribute('value')).toBe(reset.start ? '1' : '24');
+    expect(screen.getByLabelText('出力先フォルダ').getAttribute('value')).toBe(
+      reset.outputDir ? '' : 'D:/out',
+    );
+    expect(screen.getAllByRole('row')).toHaveLength(1);
+    app.unmount();
+    render(<App />);
+    const start = screen.getByLabelText<HTMLInputElement>('開始番号を1に戻す');
+    const outputDir = screen.getByLabelText<HTMLInputElement>('出力先フォルダを空にする');
+    expect(start.checked).toBe(reset.start);
+    expect(outputDir.checked).toBe(reset.outputDir);
+  });
 });
