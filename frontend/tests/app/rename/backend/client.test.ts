@@ -7,8 +7,10 @@ import {
 } from '../../../../src/app/rename/backend/client';
 import {
   ChooseOutput,
+  ChooseParent,
   Execute,
   Inspect,
+  InspectChildren,
   Preview,
 } from '../../../../bindings/github.com/milkeclair/rename/backend/app/app';
 import { Events } from '@wailsio/runtime';
@@ -16,8 +18,10 @@ import { Status } from '../../../../bindings/github.com/milkeclair/rename/backen
 import { entry, item, resultItem } from '../../../support/data';
 vi.mock('../../../../bindings/github.com/milkeclair/rename/backend/app/app', () => ({
   ChooseOutput: vi.fn(),
+  ChooseParent: vi.fn(),
   Execute: vi.fn(),
   Inspect: vi.fn(),
+  InspectChildren: vi.fn(),
   Preview: vi.fn(),
 }));
 vi.mock('@wailsio/runtime', () => ({ Events: { On: vi.fn() } }));
@@ -32,6 +36,8 @@ describe('renameBackend', () => {
     vi.mocked(Preview).mockResolvedValue(plan);
     vi.mocked(Execute).mockResolvedValue(result);
     vi.mocked(ChooseOutput).mockResolvedValue('D:/out');
+    vi.mocked(ChooseParent).mockResolvedValue('C:/parent');
+    vi.mocked(InspectChildren).mockResolvedValue(entries);
     expect(await renameBackend.inspect(['a'])).toEqual(entries);
     expect(Inspect).toHaveBeenCalledExactlyOnceWith(['a']);
     expect(await renameBackend.preview(request)).toEqual(plan);
@@ -39,13 +45,18 @@ describe('renameBackend', () => {
     expect(await renameBackend.execute(request)).toEqual(result);
     expect(Execute).toHaveBeenCalledExactlyOnceWith(request);
     expect(await renameBackend.chooseOutput()).toBe('D:/out');
+    expect(await renameBackend.chooseParent()).toBe('C:/parent');
+    expect(await renameBackend.inspectChildren('C:/parent')).toEqual(entries);
+    expect(InspectChildren).toHaveBeenCalledExactlyOnceWith('C:/parent');
   });
   it('Goのnil配列を空配列に正規化する', async () => {
     const request = { paths: [], pattern: '{番号}', start: 1, outputDir: 'D:/out' };
     vi.mocked(Inspect).mockResolvedValue(null);
+    vi.mocked(InspectChildren).mockResolvedValue(null);
     vi.mocked(Preview).mockResolvedValue({ items: null, issue: 'invalid' });
     vi.mocked(Execute).mockResolvedValue({ items: null, issue: 'failed' });
     expect(await renameBackend.inspect([])).toEqual([]);
+    expect(await renameBackend.inspectChildren('C:/parent')).toEqual([]);
     expect(await renameBackend.preview(request)).toEqual({ items: [], issue: 'invalid' });
     expect(await renameBackend.execute(request)).toEqual({ items: [], issue: 'failed' });
   });

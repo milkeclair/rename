@@ -1,4 +1,4 @@
-import { addEntries } from '../model/input';
+import { addEntries, addDirectoryEntries } from '../model/input';
 import { inputAfterExecution } from '../execution/result';
 import { changeInput } from './changeInput';
 import type { Action, RenameState } from './types';
@@ -23,17 +23,25 @@ export function reducer(state: RenameState, action: Action): RenameState {
         revision: action.revision,
       };
     case 'imported':
+    case 'directories-imported':
       return {
         ...state,
-        input: addEntries(state.input, action.entries),
+        input:
+          action.type === 'directories-imported'
+            ? addDirectoryEntries(state.input, action.entries)
+            : addEntries(state.input, action.entries),
         imports: state.imports - 1,
         preview: null,
         revision: action.revision,
         message:
           action.entries.length === 0
-            ? '追加できるファイルがありません。フォルダの直下だけが対象です。'
+            ? action.type === 'directories-imported'
+              ? '子フォルダの直下に追加できるファイルがありません。'
+              : '追加できるファイルがありません。フォルダの直下だけが対象です。'
             : '',
       };
+    case 'import-cancelled':
+      return { ...state, imports: state.imports - 1, revision: action.revision };
     case 'import-failed':
       return {
         ...state,

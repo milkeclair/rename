@@ -27,6 +27,8 @@ export function Rename() {
         sort={state.input.sort}
         locked={locked}
         canClear={canClear}
+        canImport={!locked && state.imports === 0}
+        onChooseParent={rename.chooseParent}
         onSort={rename.setSort}
         onReorder={rename.reorder}
         onRemove={rename.remove}

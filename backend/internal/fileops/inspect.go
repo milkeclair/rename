@@ -39,6 +39,29 @@ func InputFiles(path string) ([]string, error) {
 	return files, nil
 }
 
+func ChildDirectories(path string) ([]string, error) {
+	info, err := os.Lstat(path)
+	if err != nil {
+		return nil, fmt.Errorf("親フォルダを読み取れません: %s: %w", path, err)
+	}
+	if !info.IsDir() {
+		return nil, fmt.Errorf("親フォルダを指定してください: %s", path)
+	}
+
+	children, err := os.ReadDir(path)
+	if err != nil {
+		return nil, err
+	}
+
+	directories := []string{}
+	for _, child := range children {
+		if child.IsDir() && child.Type()&os.ModeSymlink == 0 {
+			directories = append(directories, filepath.Join(path, child.Name()))
+		}
+	}
+	return directories, nil
+}
+
 func InspectFile(path string) (File, error) {
 	absolute, err := filepath.Abs(path)
 	if err != nil {

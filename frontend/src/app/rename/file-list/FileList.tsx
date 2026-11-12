@@ -22,6 +22,8 @@ type Props = {
   sort: Sort;
   locked: boolean;
   canClear: boolean;
+  canImport: boolean;
+  onChooseParent: () => Promise<void>;
   onSort: (sort: Sort) => void;
   onReorder: (source: string, target: string) => void;
   onRemove: (path: string) => void;
@@ -44,12 +46,18 @@ export function FileList(props: Props) {
   }
 
   return (
-    <section className={styles.workspace} data-locked={locked}>
+    <section
+      className={styles.workspace}
+      data-locked={locked}
+      data-file-drop-target={locked ? undefined : ''}
+    >
       <FileToolbar
         count={entries.length}
         sort={sort}
         disabled={locked}
         canClear={canClear}
+        canImport={props.canImport}
+        onChooseParent={props.onChooseParent}
         onSort={onSort}
         onClear={onClear}
       />

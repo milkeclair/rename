@@ -2,11 +2,15 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { renderHook, act } from '@testing-library/react';
 import { useRename } from '../../../../src/app/rename/screen/useRename';
 import { useInteraction } from '../../../../src/app/rename/workflow/useInteraction';
+import { useDirectoryImport } from '../../../../src/app/rename/file-list/useDirectoryImport';
 import { useFileImport } from '../../../../src/app/rename/file-list/useFileImport';
 import { useExecution } from '../../../../src/app/rename/execution/useExecution';
 import { useOutputDirectory } from '../../../../src/app/rename/settings/useOutputDirectory';
 import { interaction, entry } from '../../../support/data';
 vi.mock('../../../../src/app/rename/workflow/useInteraction', () => ({ useInteraction: vi.fn() }));
+vi.mock('../../../../src/app/rename/file-list/useDirectoryImport', () => ({
+  useDirectoryImport: vi.fn(),
+}));
 vi.mock('../../../../src/app/rename/file-list/useFileImport', () => ({ useFileImport: vi.fn() }));
 vi.mock('../../../../src/app/rename/file-list/preview/usePreview', () => ({ usePreview: vi.fn() }));
 vi.mock('../../../../src/app/rename/execution/useExecution', () => ({ useExecution: vi.fn() }));
@@ -90,8 +94,11 @@ describe('useRename', () => {
     const choose = vi.fn(async () => {});
     vi.mocked(useExecution).mockReturnValue(execute);
     vi.mocked(useOutputDirectory).mockReturnValue(choose);
+    const chooseParent = vi.fn(async () => {});
+    vi.mocked(useDirectoryImport).mockReturnValue(chooseParent);
     const hook = renderHook(useRename);
     expect(hook.result.current.execute).toBe(execute);
     expect(hook.result.current.chooseOutput).toBe(choose);
+    expect(hook.result.current.chooseParent).toBe(chooseParent);
   });
 });

@@ -31,6 +31,14 @@ func (a *App) Inspect(paths []string) ([]renamer.Entry, error) {
 	return renamer.Inspect(paths)
 }
 
+func (a *App) ChooseParent() (string, error) {
+	return a.host.OpenDirectoryDialog(application.OpenFileDialogOptions{Title: "取り込む子フォルダの親フォルダを選択", CanChooseDirectories: true})
+}
+
+func (a *App) InspectChildren(path string) ([]renamer.Entry, error) {
+	return renamer.InspectChildren(path)
+}
+
 func (a *App) Preview(request renamer.Request) renamer.Plan {
 	return renamer.Preview(request)
 }

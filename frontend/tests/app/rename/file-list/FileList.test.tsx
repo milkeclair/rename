@@ -33,6 +33,8 @@ function props() {
     sort: { field: 'name' as const, descending: false },
     locked: false,
     canClear: true,
+    canImport: true,
+    onChooseParent: vi.fn(async () => {}),
     onSort: vi.fn(),
     onReorder: vi.fn(),
     onRemove: vi.fn(),
@@ -55,6 +57,8 @@ describe('FileList', () => {
       count: 1,
       canClear: true,
       onClear: value.onClear,
+      canImport: true,
+      onChooseParent: value.onChooseParent,
       onSort: value.onSort,
     });
   });

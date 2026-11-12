@@ -36,3 +36,11 @@ func Inspect(paths []string) ([]Entry, error) {
 
 	return entries, nil
 }
+
+func InspectChildren(path string) ([]Entry, error) {
+	directories, err := fileops.ChildDirectories(path)
+	if err != nil {
+		return nil, err
+	}
+	return Inspect(directories)
+}

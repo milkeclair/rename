@@ -7,15 +7,27 @@ type Props = {
   sort: Sort;
   disabled: boolean;
   canClear: boolean;
+  canImport: boolean;
+  onChooseParent: () => Promise<void>;
   onSort: (sort: Sort) => void;
   onClear: () => void;
 };
 
-export function FileToolbar({ count, sort, disabled, canClear, onSort, onClear }: Props) {
+export function FileToolbar({
+  count,
+  sort,
+  disabled,
+  canClear,
+  canImport,
+  onSort,
+  onClear,
+  onChooseParent,
+}: Props) {
   function handleSort(value: string) {
     switch (value) {
       case 'name':
       case 'created':
+      case 'directory':
       case 'manual':
         onSort({ ...sort, field: value });
     }
@@ -27,6 +39,15 @@ export function FileToolbar({ count, sort, disabled, canClear, onSort, onClear }
         {count}
         <small>ファイル</small>
       </span>
+      <button
+        className={`${controls.secondary} ${styles.compact}`}
+        disabled={disabled || !canImport}
+        onClick={() => {
+          void onChooseParent();
+        }}
+      >
+        親フォルダから追加
+      </button>
       <div className={styles.sort}>
         <label htmlFor="sort">並び順</label>
         <select
@@ -36,6 +57,7 @@ export function FileToolbar({ count, sort, disabled, canClear, onSort, onClear }
           onChange={(event) => handleSort(event.target.value)}
         >
           <option value="name">ファイル名</option>
+          <option value="directory">フォルダ順</option>
           <option value="created">作成日時</option>
           <option value="manual">手動順</option>
         </select>

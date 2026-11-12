@@ -39,7 +39,7 @@
   font-size: 12px;
 }
 
-.sort .compact {
+.compact {
   padding: 6px 10px;
 }
 
@@ -56,4 +56,11 @@
 .clear:hover:not(:disabled) {
   border-color: #991b1b;
   background: #991b1b;
+}
+
+@media (max-width: 880px) {
+  .toolbar {
+    flex-wrap: wrap;
+    gap: 10px;
+  }
 }

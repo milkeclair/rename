@@ -22,6 +22,17 @@ export function addEntries(input: RenameInput, added: Entry[]): RenameInput {
   return { ...input, entries, settings };
 }
 
+export function addDirectoryEntries(input: RenameInput, added: Entry[]): RenameInput {
+  if (added.length === 0) {
+    return input;
+  }
+
+  return sortInput(
+    { ...input, entries: mergeEntries(input.entries, added) },
+    { field: 'directory', descending: false },
+  );
+}
+
 export function sortInput(input: RenameInput, sort: Sort): RenameInput {
   return { ...input, sort, entries: sorted(input.entries, sort) };
 }
@@ -47,10 +58,16 @@ export function sorted(entries: Entry[], sort: Sort): Entry[] {
   }
 
   return [...entries].sort((left, right) => {
+    const directoryOrder =
+      sort.field === 'directory' && left.directory !== right.directory
+        ? collator.compare(left.directory, right.directory) ||
+          (left.directory < right.directory ? -1 : 1)
+        : 0;
     const comparison =
-      sort.field === 'created'
+      directoryOrder ||
+      (sort.field === 'created'
         ? left.createdAt - right.createdAt
-        : collator.compare(left.name, right.name);
+        : collator.compare(left.name, right.name));
     const order = comparison === 0 ? collator.compare(left.path, right.path) : comparison;
 
     return sort.descending ? -order : order;
