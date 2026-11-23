@@ -71,7 +71,7 @@ jobs:
         run: |
           Add-Content -LiteralPath $env:GITHUB_ENV -Value "GOCACHE=$(Join-Path $env:RUNNER_TEMP 'rename-go-build')"
           Add-Content -LiteralPath $env:GITHUB_ENV -Value "GOMODCACHE=$(Join-Path $env:RUNNER_TEMP 'rename-go-mod')"
-      - uses: actions/setup-go@v7.0.0
+      - uses: actions/setup-go@v7.1.0
         id: go
         with:
           go-version-file: go.mod
